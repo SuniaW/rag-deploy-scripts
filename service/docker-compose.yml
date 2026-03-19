@@ -1,0 +1,39 @@
+services:
+  # 后端服务
+  ai-rag-service:
+    build:
+      context: ../spring-ai-rag
+      dockerfile: Dockerfile
+    image: spring-ai-rag:latest
+    container_name: ai-rag-backend
+    restart: always
+    environment:
+      - CLOUD_IP=${CLOUD_IP}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - SPRING_THREADS_VIRTUAL_ENABLED=true
+    # 阿里云 3.5G 内存环境下，建议给后端硬限制 512M
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    networks:
+      - ai-network
+
+  # 前端服务
+  web-ui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: web-ui:latest
+    container_name: web-ui-app
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - ai-rag-service
+    networks:
+      - ai-network
+
+networks:
+  ai-network:
+    driver: bridge
