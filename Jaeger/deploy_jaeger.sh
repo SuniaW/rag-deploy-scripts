@@ -5,7 +5,7 @@
 # =================================================================
 
 # 1. 配置参数
-DEPLOY_DIR="$HOME/service/jaeger"
+DEPLOY_DIR="/usr/service/jaeger"
 echo "🚀 开始处理 Jaeger 监控中心任务..."
 
 # 2. 环境检查函数
@@ -53,7 +53,7 @@ verify() {
         # 5. 精准获取 IPv4 地址
         echo "🔎 正在检索服务器 IPv4 地址..."
         # 逻辑：强制使用 -4 参数，如果失败则尝试截取 ip addr 中的第一个内网 IPv4
-        IPV4_ADDR=$(curl -s -4 --connect-timeout 5 ifconfig.me || ip route get 1.1.1.1 | grep -oP 'src \K\S+')=$(curl -s -4 --connect-timeout 5 ifconfig.me || ip route get 1.1.1.1 | grep -oP 'src \K\S+')
+        IPV4_ADDR=$(curl -s -4 --connect-timeout 3 ifconfig.me || hostname -I | awk '{print $1}')
         echo "✅ Jaeger 重启成功且已就绪！"
         echo "🌐 监控大屏地址: http://${IPV4_ADDR}:16686"
         echo "📥 数据接收端口 (gRPC): 4317"
@@ -70,4 +70,3 @@ check_env
 setup_dir
 deploy_service
 verify
-EOF
