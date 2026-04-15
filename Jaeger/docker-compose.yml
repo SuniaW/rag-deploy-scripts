@@ -1,19 +1,42 @@
-services:
-  jaeger:
+services:      # 开始定义我们要启动的服务
+  jaeger:      # 服务名称叫 jaeger
+    # 使用“全家桶”镜像：里面包含了收集器、查询器和网页界面，非常适合开发和中小型项目
     image: jaegertracing/all-in-one:latest
+
+    # 容器启动后的名字，方便我们在 docker ps 中一眼认出它
     container_name: agentx-jaeger
+
+    # 自动重启策略：如果服务器重启或 Jaeger 意外崩溃，Docker 会自动把它拉起来
     restart: always
+
+    # 环境变量配置：相当于 Jaeger 的“开关”和“参数设置”
     environment:
-      - COLLECTOR_OTLP_ENABLED=true      # 开启 OTLP 协议支持 (Spring Boot 3 必需)
+      # 【核心配置】开启 OTLP 协议：Spring Boot 3 默认用这个“语言”说话
+      # 如果不设为 true，你的 Java 程序就没法把数据发进来
+      - COLLECTOR_OTLP_ENABLED=true
+
+      # 日志级别：info 表示只记录重要的运行信息，不会让日志满天飞
       - LOG_LEVEL=info
-      - MEMORY_MAX_TRACES=50000          # 内存最大保留链路数
+
+      # 内存限制：因为 all-in-one 版默认把追踪记录存放在内存里（不写磁盘）
+      # 这里设置最多存 50000 条，超过后会自动删掉旧的，防止把服务器内存撑爆
+      - MEMORY_MAX_TRACES=50000
+
+    # 端口映射：[宿主机端口]:[容器内端口]
     ports:
-      - "16686:16686"   # UI 界面
-      - "4317:4317"     # OTLP gRPC 端口 (AgentX 数据发送点)
-      - "4318:4318"     # OTLP HTTP 端口
-      - "9411:9411"     # Zipkin 兼容端口
+      # --- 1. 监控大屏端口 ---
+      - "16686:16686"   # 你在浏览器访问 http://IP:16686 就是看这个端口
+
+      # --- 2. 数据接收入口 (重点!) ---
+      - "4317:4317"     # gRPC 协议入口：Spring Boot 发送数据最常用的“高速公路”
+      - "4318:4318"     # HTTP 协议入口：备用的数据传输方式
+
+      # --- 3. 兼容性端口 ---
+      - "9411:9411"     # 兼容 Zipkin 协议：如果你以后用一些老系统，也可以发到这里
+
+    # 容器自身日志管理：防止 Jaeger 运行几年的日志把硬盘占满
     logging:
       driver: "json-file"
       options:
-        max-size: "50m"
-        max-file: "2"
+        max-size: "50m" # 一个日志文件最大 50MB
+        max-file: "2"   # 最多保留 2 个文件（旧的会被覆盖）
