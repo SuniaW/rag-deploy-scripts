@@ -1,0 +1,24 @@
+services:
+  redis:
+    image: redis:7.4-alpine  # 推荐 alpine 版本，体积小、漏洞少
+    container_name: redis-server
+    restart: always          # 宕机自动重启
+    ports:
+      - "6379:6379"
+    environment:
+      - TZ=Asia/Shanghai     # 统一时区，查日志必配
+    volumes:
+      - ./data:/data
+      - ./conf/redis.conf:/usr/local/etc/redis/redis.conf
+    healthcheck: # 增加健康检查，确保服务真正就绪
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 1G         # 架构师底线：限制最大内存防止宿主机整体 OOM
+    command: [ "redis-server", "/usr/local/etc/redis/redis.conf" ]
+
+
