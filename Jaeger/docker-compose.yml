@@ -1,0 +1,19 @@
+services:
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: agentx-jaeger
+    restart: always
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true      # 开启 OTLP 协议支持 (Spring Boot 3 必需)
+      - LOG_LEVEL=info
+      - MEMORY_MAX_TRACES=50000          # 内存最大保留链路数
+    ports:
+      - "16686:16686"   # UI 界面
+      - "4317:4317"     # OTLP gRPC 端口 (AgentX 数据发送点)
+      - "4318:4318"     # OTLP HTTP 端口
+      - "9411:9411"     # Zipkin 兼容端口
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "2"
