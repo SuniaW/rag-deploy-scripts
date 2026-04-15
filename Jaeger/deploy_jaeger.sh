@@ -50,9 +50,12 @@ verify() {
     echo "-------------------------------------------------------"
     if [ "$(docker ps -q -f name=agentx-jaeger)" ]; then
         # 获取本机 IP
-        PUBLIC_IP=$(curl -s ifconfig.me || echo "localhost")
+        # 5. 精准获取 IPv4 地址
+        echo "🔎 正在检索服务器 IPv4 地址..."
+        # 逻辑：强制使用 -4 参数，如果失败则尝试截取 ip addr 中的第一个内网 IPv4
+        IPV4_ADDR=$(curl -s -4 --connect-timeout 5 ifconfig.me || ip route get 1.1.1.1 | grep -oP 'src \K\S+')=$(curl -s -4 --connect-timeout 5 ifconfig.me || ip route get 1.1.1.1 | grep -oP 'src \K\S+')
         echo "✅ Jaeger 重启成功且已就绪！"
-        echo "🌐 监控大屏地址: http://${PUBLIC_IP}:16686"
+        echo "🌐 监控大屏地址: http://${IPV4_ADDR}:16686"
         echo "📥 数据接收端口 (gRPC): 4317"
         echo "📂 部署路径: $DEPLOY_DIR"
         echo "💡 提示: 如果无法访问，请检查云服务器安全组 16686 和 4317 端口是否放行。"
