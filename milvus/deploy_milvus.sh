@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 1. 定义部署目录
-DEPLOY_DIR="/home/admin/milvus"
+DEPLOY_DIR="/usr/service/milvus"
 mkdir -p $DEPLOY_DIR/volumes/etcd
 mkdir -p $DEPLOY_DIR/volumes/minio
 mkdir -p $DEPLOY_DIR/volumes/milvus

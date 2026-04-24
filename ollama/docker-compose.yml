@@ -1,0 +1,29 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: agentx-ollama
+    restart: always
+    environment:
+      # 💡 必须设置为 0.0.0.0，否则 Java 应用无法通过公网/内网 IP 访问它
+      - OLLAMA_HOST=0.0.0.0
+      # 💡 允许跨域请求
+      - OLLAMA_ORIGINS=*
+      # 💡 针对 4G 内存的保命配置：限制并行请求数，防止内存溢出导致服务器宕机
+      - OLLAMA_NUM_PARALLEL=2
+      # 💡 限制内存中同时加载的模型数量
+      - OLLAMA_MAX_LOADED_MODELS=1
+    volumes:
+      # 💡 模型持久化：下载的模型会保存在当前目录的 ollama_data 文件夹中
+      - ./ollama_data:/root/.ollama
+    ports:
+      - "11434:11434"
+    deploy:
+      resources:
+        limits:
+          # 💡 强制硬限制内存使用量。4G 的机器建议给 Ollama 限制在 3G 以内
+          memory: 3072M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
