@@ -1,0 +1,53 @@
+# ============================================================
+# 服务器 C（8.140.221.150 | 2核 4G | 北京）
+# 角色：流量入口 + 监控
+# 服务：Nginx（反向代理 + 前端）+ Jaeger（链路追踪）
+# ============================================================
+
+services:
+  # ────────────────────────────────────────
+  # Nginx 流量入口
+  # ────────────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    container_name: agentx-nginx
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      # Nginx 配置（含代理到服务器 A 的 Java 后端）
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      # 前端构建产物（Vue 项目 dist 目录）
+      - ./data/web-ui:/usr/share/nginx/html:ro
+    depends_on:
+      - jaeger
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+
+  # ────────────────────────────────────────
+  # Jaeger 链路追踪
+  # ────────────────────────────────────────
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: agentx-jaeger
+    restart: always
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+      - LOG_LEVEL=info
+      # 2C4G 环境：限制追踪记录数
+      - MEMORY_MAX_TRACES=10000
+    ports:
+      - "16686:16686"   # 监控大屏
+      - "4317:4317"     # gRPC 数据接收
+      - "4318:4318"     # HTTP 数据接收
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "2"
